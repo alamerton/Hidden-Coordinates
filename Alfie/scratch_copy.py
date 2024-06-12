@@ -12,7 +12,11 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import einops
 # import px
-
+# Not clear which 'to_numpy' should be used, using ivy's
+from ivy import to_numpy
+# trying to see what px is
+import plotly_express as px
+# import matplotlib.pyplot as py
 # %%
 
 torch.set_grad_enabled(True)
@@ -95,10 +99,8 @@ epochs = 100
 all_first_token_residuals = []
 all_last_token_residuals = []
 
-# Can't run run_with_cache with cuda on my Mac
-
-
-
+# Can't run run_with_cache with cuda on my Mac, just passing 'tokens' instead
+# What's this doing?
 for i in tqdm.tqdm(range(epochs)):
     tokens, words, word_lengths, first_token_indices, last_token_indices = gen_batch(batch_size, train_word_by_length_array)
     with torch.no_grad():
@@ -109,23 +111,6 @@ for i in tqdm.tqdm(range(epochs)):
         print("Shapes", first_token_residuals.shape, last_token_residuals.shape)
         all_first_token_residuals.append(to_numpy(first_token_residuals))
         all_last_token_residuals.append(to_numpy(last_token_residuals))
-# for i in tqdm.tqdm(range(epochs)):
-#     tokens, words, word_lengths, first_token_indices, last_token_indices = gen_batch(batch_size, train_word_by_length_array)
-#     with torch.no_grad():
-#         _, cache = model.run_with_cache(tokens.cuda(), names_filter=lambda x: x.endswith("resid_post"))
-#         residuals = cache.stack_activation("resid_post")
-#         first_token_residuals = residuals[:, torch.arange(len(first_token_indices)).to(residuals.device)[:, None], first_token_indices, :]
-#         last_token_residuals = residuals[:, torch.arange(len(last_token_indices)).to(residuals.device)[:, None], last_token_indices, :]
-#         print("Shapes", first_token_residuals.shape, last_token_residuals.shape)
-#         all_first_token_residuals.append(to_numpy(first_token_residuals))
-#         all_last_token_residuals.append(to_numpy(last_token_residuals))
-
-# all_first_token_residuals = np.concatenate(all_first_token_residuals, axis=1)
-# all_last_token_residuals = np.concatenate(all_last_token_residuals, axis=1)
-
-# print(all_first_token_residuals)
-# print(all_last_token_residuals)
-
 
 # %%
 layer = 3
@@ -133,6 +118,8 @@ resids = all_first_token_residuals[layer]
 first_ave = resids[:5000, 0].mean(0)
 second_ave = resids[:5000, 0].mean(0)
 diff = first_ave - second_ave
+
+# ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 7 is different from 768)
 px.box(to_numpy(resids[5000:] @ diff))
 
 
@@ -186,6 +173,6 @@ df = pd.DataFrame({
 
 
 # %%
-px.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="fraction").show()
+plotly.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="fraction").show()
 
 # %%

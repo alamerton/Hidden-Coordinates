@@ -11,12 +11,9 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 import numpy as np
 import einops
-# import px
-# Not clear which 'to_numpy' should be used, using ivy's
 from ivy import to_numpy
-# trying to see what px is
 import plotly_express as px
-# import matplotlib.pyplot as py
+
 # %%
 
 torch.set_grad_enabled(True)
@@ -63,9 +60,6 @@ train_word_by_length_array = [np.array([" " + j for j in train_word_df[train_wor
 test_word_by_length_array = [np.array([" " + j for j in test_word_df[test_word_df.num_tokens==i].word.values]) for i in range(1, MAX_WORD_LENGTH + 1)]
 
 # %%
-
-# Generates a batch of things. Maybe embeddings? Unclear. Returns tokens, words, word_lengths, first_token_indices, and last_token_indices
-
 def gen_batch(batch_size, word_by_length_array):
     word_lengths = torch.randint(1, MAX_WORD_LENGTH+1, (batch_size, NUM_WORDS))
     words = []
@@ -100,7 +94,6 @@ all_first_token_residuals = []
 all_last_token_residuals = []
 
 # Can't run run_with_cache with cuda on my Mac, just passing 'tokens' instead
-# What's this doing?
 for i in tqdm.tqdm(range(epochs)):
     tokens, words, word_lengths, first_token_indices, last_token_indices = gen_batch(batch_size, train_word_by_length_array)
     with torch.no_grad():

@@ -35,7 +35,7 @@ d_mlp = model.cfg.d_mlp
 d_vocab = model.cfg.d_vocab
 
 # %%
-common_words = open("common_words.txt", "r").read().split("\n")
+common_words = open("../common_words.txt", "r").read().split("\n")
 print(common_words[:10])
 
 # %%
@@ -113,27 +113,36 @@ for i in tqdm.tqdm(range(epochs)):
         all_last_token_residuals.append(to_numpy(last_token_residuals))
 
 # %%
-layer = 3
-resids = all_first_token_residuals[layer]
-first_ave = resids[:5000, 0].mean(0)
-second_ave = resids[:5000, 0].mean(0)
-diff = first_ave - second_ave
-
-# ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 7 is different from 768)
-px.box(to_numpy(resids[5000:] @ diff))
-
+## Not working, but not used beyond this cell, so leaving it out for now
+# layer = 3
+# resids = all_first_token_residuals[layer]
+# first_ave = resids[:5000, 0].mean(0)
+# second_ave = resids[:5000, 1].mean(0)
+# diff = first_ave - second_ave
+# diff = diff
+# resids_mod = resids[:5000]
+# print(resids_mod.shape)
+# print(diff.shape)
+# mult = resids_mod @ diff[0, :]
+# px.box(to_numpy(mult))
 
 # %%
 LAYER = 3
 y = np.array([j for i in range(len(all_first_token_residuals[0])) for j in range(NUM_WORDS)])
-X = all_last_token_residuals[LAYER, :].reshape(-1, d_model)
+layer_data = all_last_token_residuals[LAYER]
+X = layer_data[:, :].reshape(-1, d_model)
+
 
 # Split the dataset into train and test sets
-indices = to_numpy(torch.randperm(len(X))[:10000])
-X_train, X_test, y_train, y_test = train_test_split(X[indices], y[indices], test_size=0.1)
+x_indices = to_numpy(torch.randperm(len(X))[:10000])
+y_indices = to_numpy(torch.randperm(len(y))[:10000])
+
+common_indices = np.intersect1d(x_indices, y_indices)
+
+X_train, X_test, y_train, y_test = train_test_split(X[common_indices], y[common_indices], test_size=0.1)
 
 # Create a Logistic Regression model
-lr_model = LogisticRegression(multi_class='ovr', sovler='saga', random_state=42, max_iter=100, C=1.0)
+lr_model = LogisticRegression(multi_class='ovr', solver='saga', random_state=42, max_iter=100, C=1.0)
 
 # Fit the model on the training data
 lr_model.fit(X_train, y_train)
@@ -154,12 +163,17 @@ last_token_predictions_list = []
 last_token_abs_indices_list = []
 with torch.no_grad():
     for i in tqdm.tqdm(range(test_batches)):
-        tokens, words, word_lengths, first_token_indices, last_token_indices, = gen_batch(batch_size, test_word_by_length_array)
-        _, cache = model.run_with_cache(tokens.cuda(), names_filter = lambda x: x.endswith("resid_post"))
+        tokens, words, word_lengths, first_token_indices, last_token_indices = gen_batch(batch_size, test_word_by_length_array)
+        _, cache = model.run_with_cache(tokens, names_filter=lambda x: x.endswith("resid_post"))
         residuals = cache.stack_activation("resid_post")
-        first_token_residuals[:, torch.arange(len(first_token_indices)).to(residuals.device)[:, None], last_token_indices, :]
-        last_token_resids = to_numpy(einops.rearrange(last_token_residuals.flatten()))
-        print(first_token_residuals.shape, last_token_residuals.shape)
+        first_token_residuals = residuals[:, torch.arange(len(first_token_indices)).to(residuals.device)[:, None], first_token_indices, :]
+        last_token_residuals = residuals[:, torch.arange(len(last_token_indices)).to(residuals.device)[:, None], last_token_indices, :]
+        last_token_resids = to_numpy(einops.rearrange(last_token_residuals[LAYER], "batch word d_model -> (batch word) d_model"))
+        last_token_predictions_list.append(lr_model.predict(last_token_resids))
+        last_token_abs_indices_list.append(to_numpy(last_token_indices.flatten()))
+    # print(first_token_residuals.shape, last_token_residuals.shape)
+    # all_first_token_residuals.append(to_numpy(first_token_residuals))
+    # all_last_token_residuals.append(to_numpy(last_token_residuals))
 
 # %%
 last_token_abs_indices = np.concatenate(last_token_abs_indices_list)
@@ -173,6 +187,6 @@ df = pd.DataFrame({
 
 
 # %%
-plotly.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="fraction").show()
+px.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="fraction").show()
 
 # %%

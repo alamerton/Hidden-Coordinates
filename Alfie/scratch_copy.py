@@ -1,7 +1,5 @@
 # %%
-import os
 import torch
-import plotly # maybe import plotly to replace the neel library
 from transformer_lens import HookedTransformer
 import pandas as pd
 import numpy as np
@@ -17,13 +15,11 @@ import plotly_express as px
 # %%
 
 torch.set_grad_enabled(True)
-
 # %%
 
 model = HookedTransformer = HookedTransformer.from_pretrained("gpt2-small")
 
 # %%
-
 n_layers = model.cfg.n_layers
 d_model = model.cfg.d_model
 n_heads = model.cfg.n_heads
@@ -120,7 +116,7 @@ for i in tqdm.tqdm(range(epochs)):
 # px.box(to_numpy(mult))
 
 # %%
-LAYER = 4
+LAYER = 9
 y = np.array([j for i in range(len(all_first_token_residuals[0])) for j in range(NUM_WORDS)])
 layer_data = all_last_token_residuals[LAYER]
 X = layer_data[:, :].reshape(-1, d_model)
@@ -151,7 +147,7 @@ print(classification_report(y_test, y_pred))
 
 # %%
 test_batches = 10
-LAYER = 4
+# LAYER = 3
 last_token_predictions_list = []
 last_token_abs_indices_list = []
 with torch.no_grad():
@@ -181,7 +177,6 @@ df = pd.DataFrame({
 
 # %%
 px.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="fraction").show()
-
 
 
 # %%

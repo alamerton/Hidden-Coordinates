@@ -1,1 +1,2 @@
-# UCL-SAIL-AI-Safety-Project
+# Hidden Coordinates: Uncovering Emergent Positional Embeddings in Language Models
+This study explores the concept of emergent positional embeddings in language transformer models, specifically examining how these models represent positional information beyond absolute token positions. Our research is inspired by the exploratory work of Neel Nanda and Wes Gurnee, who experimentally demonstrated the presence of emergent positional embeddings in language transformer models. This project aims to further investigate the circuits that underpin these emergent positional embeddings.

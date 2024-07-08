@@ -114,9 +114,13 @@ for i in tqdm.tqdm(range(epochs)):
         all_first_token_residuals.append(to_numpy(first_token_residuals))
         all_last_token_residuals.append(to_numpy(last_token_residuals))
 
+"""
+Run from here to avoid repeating 100 epoch runs!
+"""
+
 # %% Data preparation for training a Logistic Regression model
 
-LAYER = 9
+LAYER = 12
 y = np.array([j for i in range(len(all_first_token_residuals[0])) for j in range(NUM_WORDS)])
 layer_data = all_last_token_residuals[LAYER]
 X = layer_data[:, :].reshape(-1, d_model)

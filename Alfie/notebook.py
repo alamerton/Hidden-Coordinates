@@ -120,7 +120,7 @@ Run from here to avoid repeating 100 epoch runs!
 
 # %% Data preparation for training a Logistic Regression model
 
-LAYER = 12
+LAYER = 0
 y = np.array([j for i in range(len(all_first_token_residuals[0])) for j in range(NUM_WORDS)])
 layer_data = all_last_token_residuals[LAYER]
 X = layer_data[:, :].reshape(-1, d_model)
@@ -173,8 +173,11 @@ df = pd.DataFrame({
     "pred": last_token_predictions
 })
 
-# Plot histogram of the prediction results
+# %% Print dataframe
+print(df)
 
-px.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="fraction").show()
+#%% Plot histogram of the prediction results
+
+px.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="percent").show()
 
 # %%

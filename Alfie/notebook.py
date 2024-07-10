@@ -178,6 +178,7 @@ print(df)
 
 #%% Plot histogram of the prediction results
 
-px.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="percent").show()
+# px.histogram(df, x="abs_pos", color="pred", facet_row="index", barnorm="percent").show()
+px.histogram(df, x="abs_pos", color="pred", facet_row="index").show()
 
 # %%
